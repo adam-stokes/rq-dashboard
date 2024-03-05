@@ -36,6 +36,10 @@
             <% } %>
         </span>
 
+        <div class="col-12" id="meta">
+            <p><strong>Meta</strong>:<br> <%= d.meta %></p>
+        </div>
+
         <% if (d.exc_info) { %>
         <div class = "row col-12">
             <pre class="exc_info col-12"><%= d.exc_info %></pre>

@@ -58,6 +58,7 @@ from .legacy_config import upgrade_config
 from .version import VERSION as rq_dashboard_version
 
 from rq.serializers import DefaultSerializer
+import json
 
 
 blueprint = Blueprint(
@@ -576,6 +577,9 @@ def list_jobs(instance_number, queue_name, registry_name, per_page, page):
 @blueprint.route("/<int:instance_number>/data/job/<job_id>.json")
 @jsonify
 def job_info(instance_number, job_id):
+    from pygments import highlight
+    from pygments.lexers.data import JsonLexer
+    from pygments.formatters import HtmlFormatter
     job = Job.fetch(job_id, serializer=config.serializer)
     return dict(
         id=job.id,
@@ -587,6 +591,7 @@ def job_info(instance_number, job_id):
         result=job._result,
         exc_info=str(job.exc_info) if job.exc_info else None,
         description=job.description,
+        meta=highlight(json.dumps(job.meta, skipkeys=True, sort_keys=True, indent=2), JsonLexer(), HtmlFormatter()) if job.meta else None
     )
 
 

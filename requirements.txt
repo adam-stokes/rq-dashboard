@@ -17,3 +17,4 @@ rq==1.15.1
 six==1.16.0
 werkzeug==2.3.7
 Redis-Sentinel-Url==1.0.1
+pygments
