@@ -16,6 +16,7 @@ As a quick-and-dirty convenience, the command line invocation in ``cli.py``
 provides the option to require HTTP Basic Auth in a few lines of code.
 
 """
+import json
 import os
 import re
 from functools import wraps
@@ -31,6 +32,9 @@ from flask import (
     send_from_directory,
     url_for,
 )
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers.data import JsonLexer
 from redis.exceptions import ConnectionError as RedisConnectionError
 from redis_sentinel_url import connect as from_url
 from rq import (
@@ -44,31 +48,34 @@ from rq import (
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 from rq.registry import (
+    CanceledJobRegistry,
     DeferredJobRegistry,
     FailedJobRegistry,
     FinishedJobRegistry,
-    StartedJobRegistry,
     ScheduledJobRegistry,
-    CanceledJobRegistry,
-
+    StartedJobRegistry,
 )
+from rq.serializers import DefaultSerializer
 from six import string_types
 
 from .legacy_config import upgrade_config
 from .version import VERSION as rq_dashboard_version
 
-from rq.serializers import DefaultSerializer
-import json
-
 
 blueprint = Blueprint(
-    "rq_dashboard", __name__, template_folder="templates", static_folder="static",
+    "rq_dashboard",
+    __name__,
+    template_folder="templates",
+    static_folder="static",
 )
+
 
 class Config:
     serializer = DefaultSerializer
 
+
 config: Config = Config()
+
 
 # @blueprint.before_app_first_request
 def setup_rq_connection(current_app):
@@ -115,13 +122,16 @@ def jsonify(f):
 
     return _wrapped
 
+
 def check_delete_enable(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if current_app.config.get("RQ_DASHBOARD_DISABLE_DELETE"):
             return dict(status="DISABLED")
         return f(*args, **kwargs)
+
     return wrapper
+
 
 def serialize_queues(instance_number, queues):
     return [
@@ -295,7 +305,9 @@ def queues_overview(instance_number):
             render_template(
                 "rq_dashboard/queues.html",
                 current_instance=instance_number,
-                instance_list=escape_format_instance_list(current_app.config.get("RQ_DASHBOARD_REDIS_URL")),
+                instance_list=escape_format_instance_list(
+                    current_app.config.get("RQ_DASHBOARD_REDIS_URL")
+                ),
                 queues=Queue.all(),
                 rq_url_prefix=url_for(".queues_overview"),
                 rq_dashboard_version=rq_dashboard_version,
@@ -307,9 +319,7 @@ def queues_overview(instance_number):
             )
         )
     except RedisConnectionError:
-        r = make_response(
-            "<h1>Connection Error</h1>"
-        )
+        r = make_response("<h1>Connection Error</h1>")
     r.headers.set("Cache-Control", "no-store")
     return r
 
@@ -320,7 +330,9 @@ def workers_overview(instance_number):
         render_template(
             "rq_dashboard/workers.html",
             current_instance=instance_number,
-            instance_list=escape_format_instance_list(current_app.config.get("RQ_DASHBOARD_REDIS_URL")),
+            instance_list=escape_format_instance_list(
+                current_app.config.get("RQ_DASHBOARD_REDIS_URL")
+            ),
             workers=Worker.all(),
             rq_url_prefix=url_for(".queues_overview"),
             rq_dashboard_version=rq_dashboard_version,
@@ -356,7 +368,9 @@ def jobs_overview(instance_number, queue_name, registry_name, per_page, page):
         render_template(
             "rq_dashboard/jobs.html",
             current_instance=instance_number,
-            instance_list=escape_format_instance_list(current_app.config.get("RQ_DASHBOARD_REDIS_URL")),
+            instance_list=escape_format_instance_list(
+                current_app.config.get("RQ_DASHBOARD_REDIS_URL")
+            ),
             queues=Queue.all(),
             queue=queue,
             per_page=per_page,
@@ -383,7 +397,9 @@ def job_view(instance_number, job_id):
         render_template(
             "rq_dashboard/job.html",
             current_instance=instance_number,
-            instance_list=escape_format_instance_list(current_app.config.get("RQ_DASHBOARD_REDIS_URL")),
+            instance_list=escape_format_instance_list(
+                current_app.config.get("RQ_DASHBOARD_REDIS_URL")
+            ),
             id=job.id,
             rq_url_prefix=url_for(".queues_overview"),
             rq_dashboard_version=rq_dashboard_version,
@@ -577,9 +593,6 @@ def list_jobs(instance_number, queue_name, registry_name, per_page, page):
 @blueprint.route("/<int:instance_number>/data/job/<job_id>.json")
 @jsonify
 def job_info(instance_number, job_id):
-    from pygments import highlight
-    from pygments.lexers.data import JsonLexer
-    from pygments.formatters import HtmlFormatter
     job = Job.fetch(job_id, serializer=config.serializer)
     return dict(
         id=job.id,
@@ -591,7 +604,13 @@ def job_info(instance_number, job_id):
         result=job._result,
         exc_info=str(job.exc_info) if job.exc_info else None,
         description=job.description,
-        meta=highlight(json.dumps(job.meta, skipkeys=True, sort_keys=True, indent=2), JsonLexer(), HtmlFormatter()) if job.meta else None
+        meta=highlight(
+            json.dumps(job.meta, skipkeys=True, sort_keys=True, indent=2),
+            JsonLexer(),
+            HtmlFormatter(),
+        )
+        if job.meta
+        else None,
     )
 
 

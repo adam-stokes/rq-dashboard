@@ -6,12 +6,11 @@ from urllib.parse import quote as urlquote, urlunparse
 
 import click
 from flask import Flask, Response, request
+from rq.serializers import JSONSerializer
 
 from . import default_settings
 from .version import VERSION
-from .web import blueprint, setup_rq_connection
-from .web import config as service_config
-from rq.serializers import JSONSerializer
+from .web import blueprint, config as service_config, setup_rq_connection
 
 
 def add_basic_auth(blueprint, username, password, realm="RQ Dashboard"):
@@ -153,15 +152,16 @@ def make_flask_app(config, username, password, url_prefix, compatibility_mode=Tr
     help="[DEPRECATED] Delete jobs instead of cancel",
 )
 @click.option(
-    "--disable-delete", is_flag=True, default=False, help="Disable delete jobs, clean up registries"
+    "--disable-delete",
+    is_flag=True,
+    default=False,
+    help="Disable delete jobs, clean up registries",
 )
 @click.option("--debug/--normal", default=False, help="Enter DEBUG mode")
 @click.option(
     "-v", "--verbose", is_flag=True, default=False, help="Enable verbose logging"
 )
-@click.option(
-    "-j", "--json", is_flag=True, default=False, help="Enable JSONSerializer"
-)
+@click.option("-j", "--json", is_flag=True, default=False, help="Enable JSONSerializer")
 def run(
     bind,
     port,

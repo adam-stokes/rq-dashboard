@@ -1,0 +1,25 @@
+{
+  "name": "rq-dashboard",
+  "version": "1.0.0",
+  "description": "Introduction ============",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adam-stokes/rq-dashboard.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/adam-stokes/rq-dashboard/issues"
+  },
+  "homepage": "https://github.com/adam-stokes/rq-dashboard#readme",
+  "dependencies": {
+    "bootstrap": "^4.6.2"
+  }
+}
